@@ -171,7 +171,10 @@ func (p *provider) GetSecretsStoreObjectContent(ctx context.Context, attrib, sec
 		}
 	}
 
-	authConfig, err := auth.NewConfig(usePodIdentity, useVMManagedIdentity, userAssignedIdentityID, workloadIdentityClientID, workloadIdentityToken, aksIdentityBindingToken, secrets)
+	authConfig, err := auth.NewConfig(
+		usePodIdentity, useVMManagedIdentity, useIdentityBinding,
+		userAssignedIdentityID, workloadIdentityClientID, workloadIdentityToken, aksIdentityBindingToken, secrets,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create auth config, error: %w", err)
 	}

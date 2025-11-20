@@ -131,7 +131,8 @@ type podIdentityCredential struct {
 // NewConfig returns new auth config
 func NewConfig(
 	usePodIdentity,
-	useVMManagedIdentity bool,
+	useVMManagedIdentity,
+	useIdentityBinding bool,
 	userAssignedIdentityID,
 	workloadIdentityClientID,
 	workloadIdentityToken string,
@@ -144,7 +145,7 @@ func NewConfig(
 	}
 	useWorkloadIdentity := len(workloadIdentityClientID) > 0 && len(workloadIdentityToken) > 0
 
-	if !usePodIdentity && !useVMManagedIdentity && !useWorkloadIdentity {
+	if !usePodIdentity && !useVMManagedIdentity && !useWorkloadIdentity && !useIdentityBinding {
 		var err error
 		if config.AADClientID, config.AADClientSecret, err = getCredential(secrets); err != nil {
 			return config, err

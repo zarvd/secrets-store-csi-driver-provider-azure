@@ -77,7 +77,7 @@ func Configure(clientOptions *policy.ClientOptions) error {
 		kubernetesTokenProxyStr = "https://kubernetes.default.svc"
 
 		kubernetesSNIName = "auf1g5enomfm17cdhbgk3g2oue6ldo9mjljbl2i8m6k9n1gr9jp5g.ests.aks" // FIXME
-		kubernetesCAFile  = "/var/run/secrets/kubernetes.io/serviceaccount"
+		kubernetesCAFile  = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 		kubernetesCAData  = ""
 	)
 

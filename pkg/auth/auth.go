@@ -30,6 +30,9 @@ const (
 	// For Azure AD Workload Identity, the audience recommended for use is
 	// "api://AzureADTokenExchange"
 	DefaultTokenAudience = "api://AzureADTokenExchange" // nolint
+
+	// For AKS Identity Binding, the audience for use is "api://AKSIdentityBinding"
+	AKSIdentityBindingTokenAudience = "api://AKSIdentityBinding"
 )
 
 var (
@@ -76,6 +79,8 @@ type Config struct {
 	UsePodIdentity bool
 	// UseVMManagedIdentity is set to true if access mode is using managed identity
 	UseVMManagedIdentity bool
+	// UseIdentityBinding is set to true if access mode is using identity binding
+	UseIdentityBinding bool
 	// UserAssignedIdentityID is the user-assigned managed identity clientID
 	UserAssignedIdentityID string
 	// AADClientSecret is the client secret for SP access mode
@@ -90,6 +95,8 @@ type Config struct {
 	// this token will be exchanged for an Azure AD Token based on the federated identity credential
 	// this service account token is associated with the workload requesting the volume mount
 	WorkloadIdentityToken string
+	// AKSIdentityBindingToken is the service account token for AKS identity binding
+	AKSIdentityBindingToken string
 }
 
 // SATokens represents the service account tokens sent as part of the MountRequest
@@ -98,6 +105,10 @@ type SATokens struct {
 		Token               string    `json:"token"`
 		ExpirationTimestamp time.Time `json:"expirationTimestamp"`
 	} `json:"api://AzureADTokenExchange"`
+	APIAKSIdentityBinding struct {
+		Token               string    `json:"token"`
+		ExpirationTimestamp time.Time `json:"expirationTimestamp"`
+	} `json:"api://AKSIdentityBinding"`
 }
 
 type workloadIdentityCredential struct {
@@ -124,6 +135,7 @@ func NewConfig(
 	userAssignedIdentityID,
 	workloadIdentityClientID,
 	workloadIdentityToken string,
+	aksIdentityBindingToken string,
 	secrets map[string]string) (Config, error) {
 	config := Config{}
 	// aad-pod-identity and user assigned managed identity modes are currently mutually exclusive
@@ -144,7 +156,7 @@ func NewConfig(
 	config.UserAssignedIdentityID = userAssignedIdentityID
 	config.WorkloadIdentityClientID = workloadIdentityClientID
 	config.WorkloadIdentityToken = workloadIdentityToken
-
+	config.AKSIdentityBindingToken = aksIdentityBindingToken
 	return config, nil
 }
 
@@ -160,6 +172,8 @@ func (c Config) GetCredential(podName, podNamespace, resource, aadEndpoint, tena
 		return getServicePrincipalTokenCredential(c.AADClientID, c.AADClientSecret, aadEndpoint, tenantID)
 	case len(c.WorkloadIdentityClientID) > 0 && len(c.WorkloadIdentityToken) > 0:
 		return getWorkloadIdentityTokenCredential(c.WorkloadIdentityClientID, c.WorkloadIdentityToken, aadEndpoint, tenantID)
+	case c.UseIdentityBinding:
+		return getIdentityBindingTokenCredential(c.UserAssignedIdentityID, c.AKSIdentityBindingToken, aadEndpoint, tenantID)
 	default:
 		return nil, fmt.Errorf("no identity mode is enabled")
 	}
@@ -324,6 +338,22 @@ func ParseServiceAccountToken(saTokens string) (string, error) {
 		return "", fmt.Errorf("token for audience %s not found", DefaultTokenAudience)
 	}
 	return tokens.APIAzureADTokenExchange.Token, nil
+}
+
+func ParseIdentityBindingServiceAccountToken(saTokens string) (string, error) {
+	klog.V(5).InfoS("parsing service account token for identity binding")
+	if len(saTokens) == 0 {
+		return "", ErrServiceAccountTokensNotFound
+	}
+	tokens := SATokens{}
+	if err := json.Unmarshal([]byte(saTokens), &tokens); err != nil {
+		return "", fmt.Errorf("failed to unmarshal service account tokens, error: %w", err)
+	}
+	klog.V(5).InfoS("successfully unmarshaled service account tokens")
+	if tokens.APIAKSIdentityBinding.Token == "" {
+		return "", fmt.Errorf("token for audience %s not found", AKSIdentityBindingTokenAudience)
+	}
+	return tokens.APIAKSIdentityBinding.Token, nil
 }
 
 func getScope(resource string) string {

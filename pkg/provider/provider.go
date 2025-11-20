@@ -131,6 +131,10 @@ func (p *provider) GetSecretsStoreObjectContent(ctx context.Context, attrib, sec
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse useVMManagedIdentity flag, error: %w", err)
 	}
+	useIdentityBinding, err := types.GetUseIdentityBinding(attrib)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse useIdentityBinding flag, error: %w", err)
+	}
 
 	// attributes for workload identity
 	workloadIdentityClientID := types.GetClientID(attrib)
@@ -160,7 +164,14 @@ func (p *provider) GetSecretsStoreObjectContent(ctx context.Context, attrib, sec
 		}
 	}
 
-	authConfig, err := auth.NewConfig(usePodIdentity, useVMManagedIdentity, userAssignedIdentityID, workloadIdentityClientID, workloadIdentityToken, secrets)
+	var aksIdentityBindingToken string
+	if useIdentityBinding {
+		if aksIdentityBindingToken, err = auth.ParseIdentityBindingServiceAccountToken(saTokens); err != nil {
+			return nil, fmt.Errorf("failed to parse identity binding service account tokens, error: %w", err)
+		}
+	}
+
+	authConfig, err := auth.NewConfig(usePodIdentity, useVMManagedIdentity, userAssignedIdentityID, workloadIdentityClientID, workloadIdentityToken, aksIdentityBindingToken, secrets)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create auth config, error: %w", err)
 	}

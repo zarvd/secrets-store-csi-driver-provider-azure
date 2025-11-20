@@ -39,6 +39,8 @@ const (
 	UseVMManagedIdentityParameter = "useVMManagedIdentity"
 	// UserAssignedIdentityIDParameter is the name of the user assigned identity ID parameter
 	UserAssignedIdentityIDParameter = "userAssignedIdentityID"
+	// UseIdentityBindingParameter is the name of the use identity binding parameter
+	UseIdentityBindingParameter = "useIdentityBinding"
 	// TenantIDParameter is the name of the tenant ID parameter
 	// TODO(aramase): change this from tenantId to tenantID after v1.2 release
 	// ref: https://github.com/Azure/secrets-store-csi-driver-provider-azure/issues/857

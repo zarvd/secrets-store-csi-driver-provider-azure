@@ -44,6 +44,14 @@ func GetUserAssignedIdentityID(parameters map[string]string) string {
 	return strings.TrimSpace(parameters[UserAssignedIdentityIDParameter])
 }
 
+func GetUseIdentityBinding(parameters map[string]string) (bool, error) {
+	str := strings.TrimSpace(parameters[UseIdentityBindingParameter])
+	if str == "" {
+		return false, nil
+	}
+	return strconv.ParseBool(str)
+}
+
 // GetTenantID returns the tenant ID
 func GetTenantID(parameters map[string]string) string {
 	// ref: https://github.com/Azure/secrets-store-csi-driver-provider-azure/issues/857

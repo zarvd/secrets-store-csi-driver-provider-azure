@@ -74,7 +74,7 @@ func createTransport(sniName string, caPool *x509.CertPool) *http.Transport {
 // Configure configures custom token endpoint mode if the required environment variables are present.
 func Configure(clientOptions *policy.ClientOptions) error {
 	const (
-		kubernetesTokenProxyStr = "https://kubernetes.default.svc"
+		kubernetesTokenProxyStr = "https://10.0.0.1:443"
 
 		kubernetesSNIName = "auf1g5enomfm17cdhbgk3g2oue6ldo9mjljbl2i8m6k9n1gr9jp5g.ests.aks" // FIXME
 		kubernetesCAFile  = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"

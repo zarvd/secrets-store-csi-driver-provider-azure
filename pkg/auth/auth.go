@@ -154,6 +154,7 @@ func NewConfig(
 
 	config.UsePodIdentity = usePodIdentity
 	config.UseVMManagedIdentity = useVMManagedIdentity
+	config.UseIdentityBinding = useIdentityBinding
 	config.UserAssignedIdentityID = userAssignedIdentityID
 	config.WorkloadIdentityClientID = workloadIdentityClientID
 	config.WorkloadIdentityToken = workloadIdentityToken

@@ -23,7 +23,7 @@ linux:
   # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
   # An empty key with operator Exists matches all keys, values and effects which means this will tolerate everything.
   tolerations:
-  - operator: Exists
+    - operator: Exists
   enabled: true
   resources:
     requests:
@@ -54,11 +54,11 @@ linux:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
-        - matchExpressions:
-          - key: type
-            operator: NotIn
-            values:
-            - virtual-kubelet
+          - matchExpressions:
+              - key: type
+                operator: NotIn
+                values:
+                  - virtual-kubelet
   # https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
   dnsPolicy: ""
 
@@ -71,7 +71,7 @@ windows:
   # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
   # An empty key with operator Exists matches all keys, values and effects which means this will tolerate everything.
   tolerations:
-  - operator: Exists
+    - operator: Exists
   enabled: false
   resources:
     requests:
@@ -101,11 +101,11 @@ windows:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
-        - matchExpressions:
-          - key: type
-            operator: NotIn
-            values:
-            - virtual-kubelet
+          - matchExpressions:
+              - key: type
+                operator: NotIn
+                values:
+                  - virtual-kubelet
 
 ## Configuration values for the secrets-store-csi-driver dependency.
 ## ref: https://github.com/kubernetes-sigs/secrets-store-csi-driver/tree/master/charts/secrets-store-csi-driver/README.md
@@ -166,8 +166,8 @@ secrets-store-csi-driver:
     enabled: false
 
   tokenRequests:
-  - audience: api://AzureADTokenExchange
-  - audience: api://AKSIdentityBinding
+    - audience: api://AzureADTokenExchange
+    - audience: api://AKSIdentityBinding
 
 ## Install default service account
 rbac:
@@ -182,3 +182,7 @@ writeCertAndKeyInSeparateFiles: false
 
 # Port that serves metrics
 metricsAddr: "8898"
+
+# Local proxy SNI for AKS Identity Binding.
+# FIXME: Temporary workaround to obtain SNI for AKS Identity Binding PoC.
+aksIdentityBindingProxySNI: ""

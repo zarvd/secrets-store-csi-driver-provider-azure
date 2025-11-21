@@ -112,6 +112,12 @@ func (mc *mountConfig) getVaultURL() (vaultURL *string, err error) {
 	return &vaultURI, nil
 }
 
+// FIXME: Temporary workaround to obtain SNI for AKS Identity Binding PoC.
+func getAKSIdentityBindingProxySNI() string {
+	const ENV = "AKS_IDENTITY_BINDING_PROXY_SNI"
+	return os.Getenv(ENV)
+}
+
 // GetSecretsStoreObjectContent gets the objects (secret, key, certificate) from keyvault and returns the content
 // to the CSI driver. The driver will write the content to the file system.
 func (p *provider) GetSecretsStoreObjectContent(ctx context.Context, attrib, secrets map[string]string, defaultFilePermission os.FileMode) ([]types.SecretFile, error) {
@@ -171,9 +177,12 @@ func (p *provider) GetSecretsStoreObjectContent(ctx context.Context, attrib, sec
 		}
 	}
 
+	aksIdentityBindingProxySNI := getAKSIdentityBindingProxySNI()
 	authConfig, err := auth.NewConfig(
 		usePodIdentity, useVMManagedIdentity, useIdentityBinding,
-		userAssignedIdentityID, workloadIdentityClientID, workloadIdentityToken, aksIdentityBindingToken, secrets,
+		userAssignedIdentityID, workloadIdentityClientID, workloadIdentityToken,
+		aksIdentityBindingToken, aksIdentityBindingProxySNI,
+		secrets,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create auth config, error: %w", err)

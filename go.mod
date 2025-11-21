@@ -70,3 +70,5 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/apimachinery v0.25.3 // indirect
 )
+
+replace github.com/Azure/azure-sdk-for-go/sdk/azidentity => github.com/zarvd/azure-sdk-for-go/sdk/azidentity v0.0.0-20251121000640-ecaede332db1

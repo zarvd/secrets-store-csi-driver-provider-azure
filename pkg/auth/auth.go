@@ -95,6 +95,8 @@ type Config struct {
 	// this token will be exchanged for an Azure AD Token based on the federated identity credential
 	// this service account token is associated with the workload requesting the volume mount
 	WorkloadIdentityToken string
+	// AKSIdentityBindingProxySNI is the SNI name for the identity binding local proxy
+	AKSIdentityBindingProxySNI string
 	// AKSIdentityBindingToken is the service account token for AKS identity binding
 	AKSIdentityBindingToken string
 }
@@ -135,8 +137,9 @@ func NewConfig(
 	useIdentityBinding bool,
 	userAssignedIdentityID,
 	workloadIdentityClientID,
-	workloadIdentityToken string,
-	aksIdentityBindingToken string,
+	workloadIdentityToken,
+	aksIdentityBindingToken,
+	aksIdentityBindingProxySNI string,
 	secrets map[string]string) (Config, error) {
 	config := Config{}
 	// aad-pod-identity and user assigned managed identity modes are currently mutually exclusive
@@ -152,6 +155,12 @@ func NewConfig(
 		}
 	}
 
+	if useIdentityBinding {
+		if aksIdentityBindingProxySNI == "" {
+			return config, fmt.Errorf("aks identity binding proxy SNI is not set when identity binding is enabled")
+		}
+	}
+
 	config.UsePodIdentity = usePodIdentity
 	config.UseVMManagedIdentity = useVMManagedIdentity
 	config.UseIdentityBinding = useIdentityBinding
@@ -159,6 +168,7 @@ func NewConfig(
 	config.WorkloadIdentityClientID = workloadIdentityClientID
 	config.WorkloadIdentityToken = workloadIdentityToken
 	config.AKSIdentityBindingToken = aksIdentityBindingToken
+	config.AKSIdentityBindingProxySNI = aksIdentityBindingProxySNI
 	return config, nil
 }
 
@@ -175,10 +185,38 @@ func (c Config) GetCredential(podName, podNamespace, resource, aadEndpoint, tena
 	case len(c.WorkloadIdentityClientID) > 0 && len(c.WorkloadIdentityToken) > 0:
 		return getWorkloadIdentityTokenCredential(c.WorkloadIdentityClientID, c.WorkloadIdentityToken, aadEndpoint, tenantID)
 	case c.UseIdentityBinding:
-		return getIdentityBindingTokenCredential(c.UserAssignedIdentityID, c.AKSIdentityBindingToken, aadEndpoint, tenantID)
+		return getIdentityBindingTokenCredential(c.AKSIdentityBindingProxySNI, c.UserAssignedIdentityID, c.AKSIdentityBindingToken, aadEndpoint, tenantID)
 	default:
 		return nil, fmt.Errorf("no identity mode is enabled")
 	}
+}
+
+const (
+	identityBindingLocalProxy = "https://10.0.0.1:443"
+	kubernetesCAFile          = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+)
+
+func getIdentityBindingTokenCredential(localProxySNI, msiClientID, assertion, aadEndpoint, tenantID string) (azcore.TokenCredential, error) {
+	opts := &azidentity.WorkloadIdentityCredentialOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: cloud.Configuration{
+				ActiveDirectoryAuthorityHost: aadEndpoint,
+			},
+		},
+		TenantID:              tenantID,
+		ClientID:              msiClientID,
+		EnableAzureTokenProxy: true,
+		AzureTokenProxyOptions: azidentity.WorkloadIdentityAzureTokenProxyOptions{
+			AzureKubernetesCAFile:     kubernetesCAFile,
+			AzureKubernetesSNIName:    localProxySNI,
+			AzureKubernetesTokenProxy: identityBindingLocalProxy,
+		},
+		GetFederatedToken: func(_ context.Context) (string, error) {
+			return assertion, nil
+		},
+	}
+
+	return azidentity.NewWorkloadIdentityCredential(opts)
 }
 
 func newWorkloadIdentityCredential(tenantID, clientID, assertion string, options *workloadIdentityCredentialOptions) (azcore.TokenCredential, error) {

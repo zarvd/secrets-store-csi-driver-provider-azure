@@ -69,6 +69,9 @@ spec:
             {{- if .Values.writeCertAndKeyInSeparateFiles }}
             - --write-cert-and-key-in-separate-files={{ .Values.writeCertAndKeyInSeparateFiles }}
             {{- end }}
+          env:
+            - name: AKS_IDENTITY_BINDING_PROXY_SNI
+              value: {{ .Values.aksIdentityBindingProxySNI }}
           livenessProbe:
             httpGet:
               path: {{ .Values.linux.healthzPath }}

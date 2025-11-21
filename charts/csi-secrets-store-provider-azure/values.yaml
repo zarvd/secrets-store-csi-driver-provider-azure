@@ -16,8 +16,8 @@ enableArcExtension: false
 
 linux:
   image:
-    repository: mcr.microsoft.com/oss/v2/azure/secrets-store/provider-azure
-    tag: v1.7.2
+    repository: acstest.azurecr.io/k8s/csi/secrets-store/provider-azure
+    tag: v2025112101-linux-amd64
     pullPolicy: IfNotPresent
   nodeSelector: {}
   # ref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
